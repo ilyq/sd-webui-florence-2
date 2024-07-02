@@ -6,7 +6,7 @@
 
 # 安装
 
-> video: [https://www.bilibili.com/video/BV1JV8fePE6M/](https://www.bilibili.com/video/BV1JV8fePE6M/)
+> 视频教程: [https://www.bilibili.com/video/BV1JV8fePE6M/](https://www.bilibili.com/video/BV1JV8fePE6M/)
 
 1. Extensions -> Install from URL -> Enter URL of this repository -> Press Install button or clone this repository under extensions/
 
