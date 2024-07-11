@@ -27,17 +27,7 @@ git clone https://github.com/ilyq/sd-webui-florence-2 extensions/sd-webui-floren
    1.2. Automatic1111's Web UI specifies an older version of transformers, 4.30.2, in the requirements.txt and requirements_versions.txt files.  
    1.3. Updating the Transformers version may trigger other errors; please test it yourself.
 
-2. flash-attn
-
-   2.1. Flash-attn has been installed successfully, but an error occurred during runtime.
-
-   ```
-   ImportError: This modeling file requires the following packages that were not found in your environment: flash_attn. Run `pip install flash_attn`
-   ```
-
-   2.2. reference: [https://gist.github.com/ashmalvayani/b4dee2084ffac9dbddc5dd32353448d3](https://gist.github.com/ashmalvayani/b4dee2084ffac9dbddc5dd32353448d3)
-
-3. model path: `models/florence2`
+2. model path: `models/florence2`
 
 # Screenshot
 

@@ -1,11 +1,14 @@
 import os
 import inspect
+from unittest.mock import patch
 
+import torch
 import gradio as gr
 from PIL import Image
+from transformers.dynamic_module_utils import get_imports
 from transformers import AutoProcessor, AutoModelForCausalLM
 
-
+from modules import devices
 from modules.paths_internal import models_path
 from modules import (
     generation_parameters_copypaste as parameters_copypaste,
@@ -32,6 +35,15 @@ available_models = [
 ]
 
 
+
+def fixed_get_imports(filename: str | os.PathLike) -> list[str]:
+    if not str(filename).endswith("modeling_florence2.py"):
+        return get_imports(filename)
+    imports = get_imports(filename)
+    imports.remove("flash_attn")
+    return imports
+
+
 def generate_prompt_fn(
     image: Image,
     model_name: str,
@@ -49,22 +61,26 @@ def generate_prompt_fn(
             repo_id=model_name, local_dir=model_path, local_dir_use_symlinks=False
         )
 
-    model = AutoModelForCausalLM.from_pretrained(
-        model_path,
-        trust_remote_code=True,
-    )
+    # https://huggingface.co/microsoft/Florence-2-base/discussions/4
+    with patch("transformers.dynamic_module_utils.get_imports", fixed_get_imports): #workaround for unnecessary flash_attn requirement
+        model = AutoModelForCausalLM.from_pretrained(
+            model_path,
+            trust_remote_code=True,
+        ).to(devices.device)
 
     processor = AutoProcessor.from_pretrained(model_path, trust_remote_code=True)
 
-    inputs = processor(text=prompt_type, images=image, return_tensors="pt")
+    inputs = processor(text=prompt_type, images=image, return_tensors="pt").to(devices.device)
 
-    generated_ids = model.generate(
-        input_ids=inputs["input_ids"],
-        pixel_values=inputs["pixel_values"],
-        max_new_tokens=int(max_new_token),
-        do_sample=False,
-        num_beams=3,
-    )
+    with torch.no_grad():
+        generated_ids = model.generate(
+            input_ids=inputs["input_ids"],
+            pixel_values=inputs["pixel_values"],
+            max_new_tokens=int(max_new_token),
+            do_sample=False,
+            num_beams=3,
+        )
+
     generated_text = processor.batch_decode(generated_ids, skip_special_tokens=False)[0]
 
     parsed_answer = processor.post_process_generation(
@@ -75,6 +91,8 @@ def generate_prompt_fn(
     print(parsed_answer)
 
     result = parsed_answer[prompt_type]
+
+    model.to(devices.cpu)
 
     return result, result
 
